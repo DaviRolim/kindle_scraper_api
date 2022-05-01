@@ -7,18 +7,19 @@ class HighlightRepository(metaclass=abc.ABCMeta):
     def save_highlights(self, highlight: str, user: str):
         pass
 
-    # @abc.abstractmethod
-    # def get_random_highlights(self, number_of_hightlights: int):
-    #     pass
+    @abc.abstractmethod
+    def get_random_highlights(self, number_of_hightlights: int):
+        pass
 
 
 
 class LocalRepository(HighlightRepository):
 
-    def save_highlights(self, highlights, user='Davi'):
+    def save_highlights(self, highlights, user='Davi Holanda'):
         js = json.dumps(highlights)
-        for book in highlights.keys():
-            print(book)
         f = open("highlights.json", 'w')
         f.write(js)
         f.close()
+
+    def get_random_highlights(self, number_of_hightlights: int):
+        pass

@@ -8,7 +8,7 @@ class HighlightAPI:
     repository = RemoteRepository()
 
     def get_highlight(self, number_of_quotes=5):
-        return self.repository.get_highlight(number_of_quotes)
+        return self.repository.get_random_highlights(number_of_quotes)
     def sync_highlights(self, username, password):
         scraper = Scraper('https://read.amazon.com/notebook')
 

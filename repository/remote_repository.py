@@ -1,6 +1,5 @@
 import os
 from random import sample
-from itertools import chain
 
 import firebase_admin
 from firebase_admin import credentials
@@ -14,8 +13,15 @@ load_dotenv()
 class RemoteRepository(HighlightRepository):
 
     def __init__(self):
-        cred = credentials.Certificate(os.getenv('FIRESTORE_CREDENTIALS_PATH'))
-        firebase_admin.initialize_app(cred)
+        # Use the application default credentials
+        # To deploy on GCP
+        cred = credentials.ApplicationDefault()
+        firebase_admin.initialize_app(cred, {
+        'projectId': 'freeadwise',
+        })
+        # My own server (local)
+        # cred = credentials.Certificate(os.getenv('./freeadwise-0324a980ef62.json'))
+        # firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
     def save_highlights(self, highlights: str, user: str):
@@ -26,7 +32,7 @@ class RemoteRepository(HighlightRepository):
                 u'metadata': {u'name': book_name},
                 u'highlights': book_higlights
             })
-    def get_highlight(self, number_of_quotes: int):
+    def get_random_highlights(self, number_of_quotes: int):
         doc_ref = self.db.collection(u'user').document('Davi Holanda')
         books_collection = doc_ref.collection(u'books').stream()
         books_list = []
@@ -36,6 +42,5 @@ class RemoteRepository(HighlightRepository):
             highlights = doc.to_dict()['highlights']
             for highlight in highlights:
                 books_list.append({doc.id: highlight})
-        print(books_list[0])
 
         return sample(books_list, number_of_quotes)
