@@ -19,6 +19,15 @@ def sync_highlights():
         "body": "Syncing your highlights from kindle"
     }
 
+@app.route("/", methods=['GET'])
+def highlight():
+    api = HighlightAPI()
+    highlights = api.get_highlight()
+    return {
+        "statusCode": 200,
+        "body": highlights
+    }
+
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
     

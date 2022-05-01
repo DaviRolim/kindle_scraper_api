@@ -8,8 +8,9 @@ class HighlightRepository(metaclass=abc.ABCMeta):
         pass
 
     # @abc.abstractmethod
-    # def get_random_quotes(self, number_of_quotes):
+    # def get_random_highlights(self, number_of_hightlights: int):
     #     pass
+
 
 
 class LocalRepository(HighlightRepository):

@@ -4,7 +4,11 @@ from repository.highlight_repository import LocalRepository
 import time
 
 class HighlightAPI:
-    repository = LocalRepository()
+    # repository = LocalRepository()
+    repository = RemoteRepository()
+
+    def get_highlight(self, number_of_quotes=5):
+        return self.repository.get_highlight(number_of_quotes)
     def sync_highlights(self, username, password):
         scraper = Scraper('https://read.amazon.com/notebook')
 

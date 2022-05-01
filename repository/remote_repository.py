@@ -1,4 +1,6 @@
 import os
+from random import sample
+from itertools import chain
 
 import firebase_admin
 from firebase_admin import credentials
@@ -24,3 +26,16 @@ class RemoteRepository(HighlightRepository):
                 u'metadata': {u'name': book_name},
                 u'highlights': book_higlights
             })
+    def get_highlight(self, number_of_quotes: int):
+        doc_ref = self.db.collection(u'user').document('Davi Holanda')
+        books_collection = doc_ref.collection(u'books').stream()
+        books_list = []
+        # TODO bring only [number_of_quotes] of random books from firestore 
+        # to reduce the number of times in the loop.
+        for doc in books_collection:
+            highlights = doc.to_dict()['highlights']
+            for highlight in highlights:
+                books_list.append({doc.id: highlight})
+        print(books_list[0])
+
+        return sample(books_list, number_of_quotes)
