@@ -8,6 +8,13 @@ ENV PYTHONUNBUFFERED True
 
 # Copy local code to the container image.
 ENV APP_HOME /app
+
+# Firestore will get credentials for default application in GCP
+ENV ENVIRONMENT prod
+
+# To use docker locally
+# ENV ENVIRONMENT local
+
 WORKDIR $APP_HOME
 COPY . ./
 

@@ -1,14 +1,15 @@
 from scraper.scraper import Scraper
 from repository.remote_repository import RemoteRepository
-from repository.highlight_repository import LocalRepository
+from repository.highlight_repository import HighlightRepository, LocalRepository
 import time
 
-class HighlightAPI:
-    # repository = LocalRepository()
-    repository = RemoteRepository()
+class HighlightController:
+    def __init__(self, repository: HighlightRepository):
+        self.repository = repository
 
     def get_highlight(self, number_of_quotes=5):
         return self.repository.get_random_highlights(number_of_quotes)
+
     def sync_highlights(self, username, password):
         scraper = Scraper('https://read.amazon.com/notebook')
 

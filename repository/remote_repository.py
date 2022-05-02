@@ -14,14 +14,17 @@ class RemoteRepository(HighlightRepository):
 
     def __init__(self):
         # Use the application default credentials
-        # To deploy on GCP
-        cred = credentials.ApplicationDefault()
-        firebase_admin.initialize_app(cred, {
-        'projectId': 'freeadwise',
-        })
-        # My own server (local)
-        # cred = credentials.Certificate(os.getenv('./freeadwise-0324a980ef62.json'))
-        # firebase_admin.initialize_app(cred)
+        # Deploy on GCP server
+        current_environment = os.getenv('ENVIRONMENT')
+        if current_environment == 'prod':
+            cred = credentials.ApplicationDefault()
+            firebase_admin.initialize_app(cred, {
+            'projectId': 'freeadwise',
+            })
+        # Deploy on my own server (local)
+        else:
+            cred = credentials.Certificate(os.getenv('FIRESTORE_CREDENTIALS_PATH'))
+            firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
     def save_highlights(self, highlights: str, user: str):
