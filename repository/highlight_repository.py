@@ -1,7 +1,6 @@
 import abc
 import json
 
-
 class HighlightRepository(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def save_highlights(self, highlight: str, user: str):
@@ -15,9 +14,9 @@ class HighlightRepository(metaclass=abc.ABCMeta):
 
 class LocalRepository(HighlightRepository):
 
-    def save_highlights(self, highlights, user='Davi Holanda'):
+    def save_highlights(self, highlights, user):
         js = json.dumps(highlights)
-        f = open("highlights.json", 'w')
+        f = open(f"highlights-{user}.json", 'w')
         f.write(js)
         f.close()
 

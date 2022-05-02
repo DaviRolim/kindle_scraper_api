@@ -28,7 +28,7 @@ class RemoteRepository(HighlightRepository):
 
     def save_highlights(self, highlights: str, user: str):
         # TODO when saving highlights, update a doc in the user/meta
-        # with the last sync date
+        # with the last sync date and total books [len(highlights)]
         # TODO instead of using the name of the book as doc id
         # use a number starting from 1 to ... and put the name of the book and author
         # as a field in the document.
