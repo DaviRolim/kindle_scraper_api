@@ -3,7 +3,6 @@ from threading import Thread
 from flask import Flask, request, jsonify
 
 from controller.highlight_controller import HighlightController
-from repository.remote_repository import RemoteRepository
 
 class HighlightAPI:
 
@@ -11,10 +10,9 @@ class HighlightAPI:
 
     @app.route("/", methods=['POST'])
     def sync_highlights():
-        repository = RemoteRepository()
-        api = HighlightController(repository)
+        controller = HighlightController()
         data = request.json
-        sync_thread = Thread(target=api.sync_highlights, args=(data['username'], data['password']))
+        sync_thread = Thread(target=controller.sync_highlights, args=(data['username'], data['password']))
         sync_thread.start()
         return {
             "statusCode": 200,
@@ -23,9 +21,8 @@ class HighlightAPI:
 
     @app.route("/", methods=['GET'])
     def highlight():
-        repository = RemoteRepository()
-        api = HighlightController(repository)
-        highlights = api.get_highlight()
+        controller = HighlightController()
+        highlights = controller.get_highlight()
         return {
             "statusCode": 200,
             "body": highlights
