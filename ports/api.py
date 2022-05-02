@@ -12,7 +12,7 @@ class HighlightAPI:
     def sync_highlights():
         controller = HighlightController()
         data = request.json
-        sync_thread = Thread(target=controller.sync_highlights, args=(data['email'], data['password']))
+        sync_thread = Thread(target=controller.sync_highlights, args=(data['email'], data['password'], data['username']))
         sync_thread.start()
         return {
             "statusCode": 200,
