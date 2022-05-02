@@ -8,7 +8,7 @@ class HighlightRepository(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_random_highlights(self, number_of_hightlights: int):
+    def get_random_highlights(self, user, number_of_hightlights: int):
         pass
 
 
@@ -21,5 +21,5 @@ class LocalRepository(HighlightRepository):
         f.write(js)
         f.close()
 
-    def get_random_highlights(self, number_of_hightlights: int):
+    def get_random_highlights(self, user, number_of_hightlights: int):
         pass

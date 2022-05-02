@@ -1,5 +1,4 @@
 import os
-import json
 from ports.api import HighlightAPI
 
 

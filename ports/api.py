@@ -12,7 +12,7 @@ class HighlightAPI:
     def sync_highlights():
         controller = HighlightController()
         data = request.json
-        sync_thread = Thread(target=controller.sync_highlights, args=(data['username'], data['password']))
+        sync_thread = Thread(target=controller.sync_highlights, args=(data['email'], data['password']))
         sync_thread.start()
         return {
             "statusCode": 200,
@@ -21,8 +21,9 @@ class HighlightAPI:
 
     @app.route("/", methods=['GET'])
     def highlight():
+        args = request.args
         controller = HighlightController()
-        highlights = controller.get_highlight()
+        highlights = controller.get_highlight(args.get('name'))
         return {
             "statusCode": 200,
             "body": highlights

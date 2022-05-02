@@ -15,19 +15,25 @@ class RemoteRepository(HighlightRepository):
     def __init__(self):
         # Use the application default credentials
         # Deploy on GCP server
-        current_environment = os.getenv('ENVIRONMENT')
-        if current_environment == 'prod':
+        if os.getenv('ENVIRONMENT') == 'prod':
             cred = credentials.ApplicationDefault()
             firebase_admin.initialize_app(cred, {
             'projectId': 'freeadwise',
             })
-        # Deploy on my own server (local)
+        # Deploy on my own server (local) using the certificate
         else:
             cred = credentials.Certificate(os.getenv('FIRESTORE_CREDENTIALS_PATH'))
             firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
     def save_highlights(self, highlights: str, user: str):
+        # TODO when saving highlights, update a doc in the user/meta
+        # with the last sync date
+        # TODO instead of using the name of the book as doc id
+        # use a number starting from 1 to ... and put the name of the book and author
+        # as a field in the document.
+        # TODO instead of a list of strings with the highlights,
+        # return a list of dictionaries with the location and highlight
         for book_name, book_higlights in highlights.items():
             doc_ref = self.db.collection(u'user').document(user)
             book_ref = doc_ref.collection(u'books').document(book_name)
@@ -35,8 +41,8 @@ class RemoteRepository(HighlightRepository):
                 u'metadata': {u'name': book_name},
                 u'highlights': book_higlights
             })
-    def get_random_highlights(self, number_of_quotes: int):
-        doc_ref = self.db.collection(u'user').document('Davi Holanda')
+    def get_random_highlights(self, user, number_of_quotes: int):
+        doc_ref = self.db.collection(u'user').document(user)
         books_collection = doc_ref.collection(u'books').stream()
         books_list = []
         # TODO bring only [number_of_quotes] of random books from firestore 
