@@ -1,5 +1,6 @@
 import os
 from random import sample
+from datetime import datetime
 
 import firebase_admin
 from firebase_admin import credentials
@@ -26,30 +27,38 @@ class RemoteRepository(HighlightRepository):
             firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
-    def save_highlights(self, highlights: str, user: str):
-        # TODO when saving highlights, update a doc in the user/meta
-        # with the last sync date and total books [len(highlights)]
-        # TODO instead of using the name of the book as doc id
-        # use a number starting from 1 to ... and put the name of the book and author
-        # as a field in the document.
-        # TODO instead of a list of strings with the highlights,
-        # return a list of dictionaries with the location and highlight
-        for book_name, book_higlights in highlights.items():
-            doc_ref = self.db.collection(u'user').document(user)
-            book_ref = doc_ref.collection(u'books').document(book_name)
-            book_ref.set({
-                u'metadata': {u'name': book_name},
-                u'highlights': book_higlights
-            })
+    def save_books(self, books: str, user: str):
+        # TODO I can make every book be a collection so each highlight is one document
+        # To add functionalities later like Favorite highlights
+        # it would be hard in this current model, because the
+        books_lenght = len(books)
+        doc_ref = self.db.collection(u'user').document(user)
+        meta_doc = doc_ref.collection(u'info').document('meta')
+        meta_doc.set({
+            'last_sync': datetime.now(),
+            'total_books': books_lenght})
+
+        books_ref = doc_ref.collection(u'books')
+        for book in books:
+            book_ref = books_ref.document(book['title'])
+            book_ref.set({'last_accessed': book['last_accessed'],
+                          'author' : book['author'],
+                          'imageURL': book['imageURL']})
+            book_highlights_ref = book_ref.collection(u'highlights')
+            for highlight in book['highlights']:
+                book_highlights_ref.add(highlight)
+
     def get_random_highlights(self, user, number_of_quotes: int):
+        # TODO make this work for the new layout of documents.
         doc_ref = self.db.collection(u'user').document(user)
         books_collection = doc_ref.collection(u'books').stream()
         books_list = []
-        # TODO bring only [number_of_quotes] of random books from firestore 
-        # to reduce the number of times in the loop.
         for doc in books_collection:
             highlights = doc.to_dict()['highlights']
             for highlight in highlights:
                 books_list.append({doc.id: highlight})
 
         return sample(books_list, number_of_quotes)
+
+    def get_book(self, user):
+        pass

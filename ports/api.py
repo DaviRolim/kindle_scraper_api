@@ -9,10 +9,10 @@ class HighlightAPI:
     app = Flask(__name__)
 
     @app.route("/", methods=['POST'])
-    def sync_highlights():
+    def sync_books():
         controller = HighlightController()
         data = request.json
-        sync_thread = Thread(target=controller.sync_highlights, args=(data['email'], data['password'], data['username']))
+        sync_thread = Thread(target=controller.sync_books, args=(data['email'], data['password'], data['username']))
         sync_thread.start()
         return {
             "statusCode": 200,

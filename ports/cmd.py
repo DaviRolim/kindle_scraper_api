@@ -22,4 +22,4 @@ def start():
         username = args.username
 
         controller = HighlightController(is_local=True)
-        controller.sync_highlights(email, password, username)
+        controller.sync_books(email, password, username)
