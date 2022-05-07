@@ -39,12 +39,19 @@ def extract_highlights(soup):
 
 def handler(event=None, context=None):
     print(event)
+    # Get the parameters from the event
     email = event['body']['email']
     password = event['body']['password']
     username = event['body']['username']
+
+    # Start the chrome driver using the options above
     chrome = webdriver.Chrome("/opt/chromedriver",
                               options=options)
+    
+    # Connect to the Kindle webpage
     chrome.get("https://read.amazon.com/notebook")
+
+    # Wait until the element containing the input for email appear on the screen
     WebDriverWait(chrome, 10).until(
                 EC.presence_of_element_located((By.ID, "ap_email")))
     # Login
@@ -52,35 +59,48 @@ def handler(event=None, context=None):
     chrome.find_element_by_id('ap_password').send_keys(password)
     chrome.find_element_by_id('signInSubmit').click()
 
+    # Wait until the page is loaded and the elements area appearing on the screen
     WebDriverWait(chrome, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "kp-notebook-library-each-book")))
+
     # Find all clickable book elements to iterate
     books_elements_to_click = chrome.find_elements_by_class_name(
         'kp-notebook-library-each-book')
-    res = []
-    print(f'[LIFE ENJOYER] Number of books {len(books_elements_to_click)}')
+    print(f'Number of books {len(books_elements_to_click)}')
+
+    # For each book, extract the information and send to the second lambda that will load to firestore
     for book_el in books_elements_to_click:
         try:
+            # Go to the book page with its highlights and information
             book_el.click()
+            
+            # Wait until the elements appear on the screen
             WebDriverWait(chrome, 10).until(
                 EC.presence_of_element_located((By.ID, "annotation-scroller")))
             
+            # Get the HTML content of the page
             content = chrome.page_source
+            
+            # Initialize BeautifulSoup to scrap the content of the page, as BS is way faster than selenium for this purpose.
             soup = BeautifulSoup(content, features="html.parser")
             main_div = soup.find('div', {'class': 'kp-notebook-annotation-container'})
             header_div = main_div.findChild('div')
+
+            # Gather the elements I need
             title = header_div.find_next('h3').get_text().strip()
             imgURL = header_div.find_next('img').attrs['src']
             last_accessed = header_div.find_next(
                 'span', id='kp-notebook-annotated-date').get_text().strip()
             author = header_div.find_all_next('p')[1].get_text().strip()
             highlights = extract_highlights(soup)
+            
             book_info = {'username': username,
                         'title': title,
                         'author': author,
                         'imageURL': imgURL,
                         'lastAccessed': last_accessed,
                         'highlights': highlights}
+            # Call the second lambda that saves this to firestore
             client.invoke(
                 FunctionName = 'firestore-db',
                 InvocationType = 'Event', #'RequestResponse',
@@ -89,6 +109,7 @@ def handler(event=None, context=None):
 
         except Exception as e:
             print(e)
+
     return {
         "statusCode": 200,
         "body": {"message": "Highlights Syncronized"}
