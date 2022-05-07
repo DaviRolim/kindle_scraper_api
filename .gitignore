@@ -5,4 +5,6 @@ __pycache__
 .pytest_cache
 .env
 highlights.json
-freeadwise-0324a980ef62.json
+LICENSE
+*freeadwise-0324a980ef62.json*
+**/*freeadwise-0324a980ef62.json*

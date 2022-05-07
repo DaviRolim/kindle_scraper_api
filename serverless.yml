@@ -1,0 +1,51 @@
+service: docker-selenium-lambda
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'prod'}
+  region: ${env:AWS_REGION, 'us-east-1'}
+  ecr:
+    images:
+      scraper-img:
+        path: ./scraper/
+        file: Dockerfile
+        platform: linux/amd64
+      firestore-img:
+        path: ./firebase_repo/
+        file: Dockerfile
+        platform: linux/amd64
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "lambda:InvokeFunction"
+        - "lambda:InvokeAsync"
+      Resource: "*"
+
+package:
+  individually: true
+
+functions:
+  scraper:
+    url:
+      cors: true
+    package:
+      exclude:
+        - ./**
+    timeout: 600
+    memorySize: 1024
+    image:
+      name: scraper-img
+    name: scraper
+
+  firestore-db:
+    package:
+        exclude:
+          - ./**
+    timeout: 30
+    memorySize: 512
+    image:
+      name: firestore-img
+    name: firestore-db
+
+plugins:
+  - serverless-python-requirements

@@ -1,0 +1,321 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ServerlessDeploymentBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ServerlessDeploymentBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ScraperLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/scraper"
+      }
+    },
+    "FirestoreDashdbLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/firestore-db"
+      }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "docker-selenium-lambda",
+                  "prod",
+                  "lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:CreateLogGroup"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/scraper:*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/firestore-db:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/scraper:*:*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/firestore-db:*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:InvokeFunction",
+                    "lambda:InvokeAsync"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "docker-selenium-lambda",
+              "prod",
+              {
+                "Ref": "AWS::Region"
+              },
+              "lambdaRole"
+            ]
+          ]
+        }
+      }
+    },
+    "FirestoreDashdbLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "ImageUri": "877570356257.dkr.ecr.us-east-1.amazonaws.com/serverless-docker-selenium-lambda-prod@sha256:f1c603c6a65fc955d813eb219352d5c182c3e2839ae8a41f7a711388478906ae"
+        },
+        "PackageType": "Image",
+        "FunctionName": "firestore-db",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "FirestoreDashdbLogGroup"
+      ]
+    },
+    "FirestoreDashdbLambdaVersionrKLOqXMQcP8QaC1SOBZH0Mpuy7HL9iZhGFfaFbH7QN8": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "FirestoreDashdbLambdaFunction"
+        },
+        "CodeSha256": "f1c603c6a65fc955d813eb219352d5c182c3e2839ae8a41f7a711388478906ae"
+      }
+    },
+    "ScraperLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "ImageUri": "877570356257.dkr.ecr.us-east-1.amazonaws.com/serverless-docker-selenium-lambda-prod@sha256:f4f0e7801d1a4eba22d4c1878766b96c2d248469b3fbf7b3ed8ce5434cc13eda"
+        },
+        "PackageType": "Image",
+        "FunctionName": "scraper",
+        "MemorySize": 1024,
+        "Timeout": 600,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "ScraperLogGroup"
+      ]
+    },
+    "ScraperLambdaVersionl3MZw9rIOCe2pLjeAtEv0iq1u7HztIND0N6W1SOEgpY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ScraperLambdaFunction"
+        },
+        "CodeSha256": "f4f0e7801d1a4eba22d4c1878766b96c2d248469b3fbf7b3ed8ce5434cc13eda"
+      }
+    },
+    "ScraperLambdaFunctionUrl": {
+      "Type": "AWS::Lambda::Url",
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "ScraperLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Cors": {
+          "AllowHeaders": [
+            "Content-Type",
+            "X-Amz-Date",
+            "Authorization",
+            "X-Api-Key",
+            "X-Amz-Security-Token"
+          ],
+          "AllowMethods": [
+            "*"
+          ],
+          "AllowOrigins": [
+            "*"
+          ]
+        }
+      }
+    },
+    "ScraperLambdaPermissionFnUrl": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ScraperLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunctionUrl",
+        "Principal": "*",
+        "FunctionUrlAuthType": "NONE"
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      },
+      "Export": {
+        "Name": "sls-docker-selenium-lambda-prod-ServerlessDeploymentBucketName"
+      }
+    },
+    "FirestoreDashdbLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "FirestoreDashdbLambdaVersionrKLOqXMQcP8QaC1SOBZH0Mpuy7HL9iZhGFfaFbH7QN8"
+      },
+      "Export": {
+        "Name": "sls-docker-selenium-lambda-prod-FirestoreDashdbLambdaFunctionQualifiedArn"
+      }
+    },
+    "ScraperLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "ScraperLambdaVersionl3MZw9rIOCe2pLjeAtEv0iq1u7HztIND0N6W1SOEgpY"
+      },
+      "Export": {
+        "Name": "sls-docker-selenium-lambda-prod-ScraperLambdaFunctionQualifiedArn"
+      }
+    },
+    "ScraperLambdaFunctionUrl": {
+      "Description": "Lambda Function URL",
+      "Value": {
+        "Fn::GetAtt": [
+          "ScraperLambdaFunctionUrl",
+          "FunctionUrl"
+        ]
+      },
+      "Export": {
+        "Name": "sls-docker-selenium-lambda-prod-ScraperLambdaFunctionUrl"
+      }
+    }
+  }
+}
