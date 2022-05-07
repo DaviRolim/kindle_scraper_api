@@ -10,7 +10,8 @@ Here we have two Lambda functions using container images. Let's understand about
     "password": "password_to_conect_to_your_kindle_account"
 }
 ```
-_I know, using email and password in a body request isn't safe, this is the first version._
+_I know, using email and password in a body request isn't safe, this is the first version._  
+
 This first function will open a browser, connect to kindle highlights webpage and scrap the page of each book and gather the following information.
 ```json
 {
@@ -45,7 +46,3 @@ $ git clone https://github.com/DaviRolim/kindle_scraper_api.git
 $ sls deploy
 $ sls invoke --function scraper # Yay! You will get texts of example.com
 ```
-
-## Side Project
-
-If you don't want to create functions each time for each purpose, Please check out [pythonista-chromeless](https://github.com/umihico/pythonista-chromeless)
