@@ -3,16 +3,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+from datetime import datetime, timedelta
+
 from tempfile import mkdtemp
 import boto3
 import json
 
 client = boto3.client('lambda')
-# different requirements for different lambdas
-# https://www.serverless.com/plugins/serverless-python-individually
- 
-# TODO add another function that receives the response for the second lambda (book_info)
-# and save to firestore.
 
 options = webdriver.ChromeOptions()
 options.binary_location = '/opt/chrome/chrome'
@@ -28,6 +28,35 @@ options.add_argument(f"--user-data-dir={mkdtemp()}")
 options.add_argument(f"--data-path={mkdtemp()}")
 options.add_argument(f"--disk-cache-dir={mkdtemp()}")
 options.add_argument("--remote-debugging-port=9222")
+
+
+# Initializing firestore
+cred = credentials.Certificate('./freeadwise-0324a980ef62.json')
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+def str_to_date(date_string):
+    return datetime.strptime(date_string, '%A %B %d, %Y').date()
+
+def get_last_sync_date(user_id):
+    doc_ref = db.collection(u'user').document(user_id)
+    doc = doc_ref.get()
+    if doc.exists:
+        doc_dict = doc.to_dict()
+        last_sync = doc_dict['last_sync']
+        date = datetime.fromtimestamp(last_sync.timestamp())
+        return date.date()
+    # if user is not yet created, last_sync will be 300 years ago
+    return (datetime.now() - timedelta(days=365*300)).date()
+
+def update_user_metadata(user_id, total_books):
+    user_ref = db.collection(u'user').document(user_id)
+    
+    user_ref.set({
+            'last_sync': datetime.now(),
+            'total_books': total_books})
+
+# TODO Create exception classes so I can refactor the code and raise proper errors and keep the handler cleaner.
 
 def extract_highlights(soup):
     elements = soup.find_all('span', id='highlight')
@@ -81,8 +110,10 @@ def handler(event=None, context=None):
          # Find all clickable book elements to iterate
         books_elements_to_click = chrome.find_elements_by_class_name(
             'kp-notebook-library-each-book')
-        print(f'Number of books {len(books_elements_to_click)}')
+        total_books = len(books_elements_to_click)
+        print(f'Number of books {total_books}')
 
+        last_sync_date = get_last_sync_date(username)
         # For each book, extract the information and send to the second lambda that will load to firestore
         for book_el in books_elements_to_click: 
             try:
@@ -108,6 +139,13 @@ def handler(event=None, context=None):
                     'span', id='kp-notebook-annotated-date').get_text().strip()
                 author = header_div.find_all_next('p')[1].get_text().strip()
                 highlights = extract_highlights(soup)
+
+                # Books links are ordered by last accessed by default.
+                # So if the last_sync date is greater than lascAccessed
+                # I can break out of this loop
+                last_acessed_date = str_to_date(last_accessed)
+                if last_sync_date > last_acessed_date:
+                    break
                 
                 book_info = {'username': username,
                             'title': title,
@@ -128,7 +166,8 @@ def handler(event=None, context=None):
                     "statusCode": 500,
                     "body": {"message": "Could not syncronize your highlights"}
                 }
-
+        # Before returning with success, save user metadata on firestore
+        update_user_metadata(username, total_books)
         return {
             "statusCode": 200,
             "body": {"message": "Highlights Syncronized"}

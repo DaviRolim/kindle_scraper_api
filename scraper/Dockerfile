@@ -10,8 +10,10 @@ RUN yum install atk cups-libs gtk3 libXcomposite alsa-lib \
     libXcursor libXdamage libXext libXi libXrandr libXScrnSaver \
     libXtst pango at-spi2-atk libXt xorg-x11-server-Xvfb \
     xorg-x11-xauth dbus-glib dbus-glib-devel -y
-# RUN pip install selenium
+
 COPY requirements.txt .
+COPY freeadwise-0324a980ef62.json ./
+
 RUN pip install --no-cache-dir -r requirements.txt
 COPY --from=build /opt/chrome-linux /opt/chrome
 COPY --from=build /opt/chromedriver /opt/
