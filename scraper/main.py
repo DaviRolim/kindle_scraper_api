@@ -39,7 +39,7 @@ def str_to_date(date_string):
     return datetime.strptime(date_string, '%A %B %d, %Y').date()
 
 def get_last_sync_date(user_id):
-    doc_ref = db.collection(u'user').document(user_id)
+    doc_ref = db.collection(u'users').document(user_id)
     doc = doc_ref.get()
     if doc.exists:
         doc_dict = doc.to_dict()
@@ -50,7 +50,7 @@ def get_last_sync_date(user_id):
     return (datetime.now() - timedelta(days=365*300)).date()
 
 def update_user_metadata(user_id, total_books):
-    user_ref = db.collection(u'user').document(user_id)
+    user_ref = db.collection(u'users').document(user_id)
     
     user_ref.set({
             'last_sync': datetime.now(),
@@ -73,8 +73,6 @@ def input_valid(body):
 def handler(event=None, context=None):
     print(event)
     body = json.loads(event['body'])
-    # TODO add firestore here to update the last_sync before return the result (if everything goes ok and highlights are synced)
-    # and to check if the [lastAccessed] property is before the last synced, if this is the case I don't need to call the second lambda
 
     # Check if input contains the required keys before continuing
     if not input_valid(body):

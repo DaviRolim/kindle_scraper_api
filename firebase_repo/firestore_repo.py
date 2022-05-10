@@ -13,7 +13,7 @@ db = firestore.client()
 
 def handler(event=None, context=None):
     print(event['title'])
-    doc_ref = db.collection(u'user').document(event['username'])
+    doc_ref = db.collection(u'users').document(event['username'])
     book_ref = doc_ref.collection(u'books').document(event['title'])
     last_accessed_time = datetime.strptime(event['lastAccessed'], '%A %B %d, %Y')
     book_ref.set({'lastAccessed': last_accessed_time,
