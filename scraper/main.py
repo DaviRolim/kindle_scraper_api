@@ -1,3 +1,4 @@
+from heapq import merge
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -40,21 +41,23 @@ def str_to_date(date_string):
 
 def get_last_sync_date(user_id):
     doc_ref = db.collection(u'users').document(user_id)
+    last_sync = (datetime.now() - timedelta(days=365*300))
     doc = doc_ref.get()
     if doc.exists:
         doc_dict = doc.to_dict()
-        last_sync = doc_dict['last_sync']
+        if 'last_sync' in doc_dict:
+            last_sync = doc_dict['last_sync']
         date = datetime.fromtimestamp(last_sync.timestamp())
         return date.date()
     # if user is not yet created, last_sync will be 300 years ago
-    return (datetime.now() - timedelta(days=365*300)).date()
+    return last_sync.date()
 
 def update_user_metadata(user_id, total_books):
     user_ref = db.collection(u'users').document(user_id)
     
     user_ref.set({
             'last_sync': datetime.now(),
-            'total_books': total_books})
+            'total_books': total_books}, merge=True)
 
 # TODO Create exception classes so I can refactor the code and raise proper errors and keep the handler cleaner.
 
@@ -85,6 +88,7 @@ def handler(event=None, context=None):
     email = body['email']
     password = body['password']
     username = body['username']
+    print(email, password, username)
 
     # Start the chrome driver using the options above
     chrome = webdriver.Chrome("/opt/chromedriver",
@@ -112,6 +116,7 @@ def handler(event=None, context=None):
         print(f'Number of books {total_books}')
 
         last_sync_date = get_last_sync_date(username)
+        print(f'get_last_sync_date return {last_sync_date}')
         # For each book, extract the information and send to the second lambda that will load to firestore
         for book_el in books_elements_to_click: 
             try:
