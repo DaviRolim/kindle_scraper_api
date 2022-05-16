@@ -18,6 +18,10 @@ provider:
         path: ./daily_highlights/
         file: Dockerfile
         platform: linux/amd64
+      user-streak-img:
+        path: ./user_streak/
+        file: Dockerfile
+        platform: linux/amd64
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -52,6 +56,18 @@ functions:
     image:
       name: daily-highlights-img
     name: dailyhighlights
+
+  userstreak:
+    url:
+      cors: true
+    package:
+      exclude:
+        - ./**
+    timeout: 30
+    memorySize: 512
+    image:
+      name: user-streak-img
+    name: user-streak
 
   firestore-db:
     package:

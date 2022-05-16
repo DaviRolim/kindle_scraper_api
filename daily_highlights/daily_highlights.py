@@ -45,7 +45,7 @@ def _get_daily_highlights_ref(userID):
 
 def _setupDailyHighlights(daily_highlight_ref, userID):
     random_highlights = _generate_random_highlights(userID)
-    response = {'quotes': random_highlights}
+    response = {'quotes': random_highlights, 'finished': False}
     
     daily_highlight_ref.set(response)
 
