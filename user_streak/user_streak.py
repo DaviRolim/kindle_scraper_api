@@ -72,6 +72,11 @@ def handler(event=None, context=None):
             if not yesterday_review['finished']:
                 user_ref.update({'streak': 0})
         else:
+            if doc_today.exists:
+                today_review = doc_today.to_dict()
+                if not today_review['finished']:
+                    user_ref.update({'streak': 0})
+            else:
                 user_ref.update({'streak': 0})
 
     if doc_today.exists: # User accessed today
