@@ -6,6 +6,10 @@ provider:
   region: ${env:AWS_REGION, 'us-east-1'}
   ecr:
     images:
+      update-daily-highlight-img:
+        path: ./update_highlights_for_users/
+        file: Dockerfile
+        platform: linux/amd64
       scraper-img:
         path: ./scraper/
         file: Dockerfile
@@ -44,6 +48,18 @@ functions:
     image:
       name: scraper-img
     name: scraper
+
+  update-daily-highlight:
+    events:
+      - schedule: cron(0 12 * * ? *)
+    package:
+      exclude:
+        - ./**
+    timeout: 30
+    memorySize: 512
+    image:
+      name: update-daily-highlight-img
+    name: update-daily-highlight
 
   dailyhighlights:
     url:
